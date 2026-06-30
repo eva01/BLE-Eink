@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BLE E-Paper Web Control</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div class="brand-mark" aria-hidden="true">EPD</div>
+        <h1>BLE E-Paper Control</h1>
+        <p>Web Bluetooth control surface for Nordic e-paper firmware, with Dialog tag commands kept as a secondary tool.</p>
+      </header>
+
+      <section class="console">
+        <div class="connection-bar">
+          <div class="connection-state">
+            <span class="radio-dot" id="statusDot"></span>
+            <span id="status">Disconnected</span>
+          </div>
+          <div class="connection-actions">
+            <button id="connectButton" class="primary-action" type="button">Connect</button>
+            <button id="disconnectButton" class="danger-action" type="button" disabled>Disconnect</button>
+          </div>
+        </div>
+
+        <nav class="target-tabs" aria-label="Firmware target">
+          <button class="nav-item active" data-class="nrf" type="button">
+            <span class="nav-icon">NRF</span>
+            <span>NRF / Nordic</span>
+          </button>
+          <button class="nav-item" data-class="da" type="button">
+            <span class="nav-icon">DA</span>
+            <span>Dialog Tag</span>
+          </button>
+        </nav>
+
+        <section class="device-card">
+          <div class="device-main">
+            <span class="device-icon" aria-hidden="true">▣</span>
+            <div>
+              <div class="label">Device</div>
+              <h2 id="deviceName">No device connected</h2>
+              <p id="deviceMeta">NRF / Nordic selected. Connect to write commands.</p>
+            </div>
+          </div>
+          <div class="stat">
+            <span>Firmware Version</span>
+            <strong id="firmwareVersion">--</strong>
+          </div>
+          <div class="stat">
+            <span>System Time</span>
+            <strong id="systemTime">--</strong>
+          </div>
+        </section>
+
+        <section class="panel" id="nrfPanel">
+          <div class="panel-head">
+            <div>
+              <div class="label">Main target</div>
+              <h2>NRF / Nordic Commands</h2>
+            </div>
+            <span class="chip">Service 62750001</span>
+          </div>
+
+          <div class="section-block">
+            <h3>Time Mode</h3>
+            <div class="command-grid">
+              <button class="command accent" data-nrf-time-mode="1"><strong>Calendar Mode</strong><span>0x20 + timestamp + mode 1</span></button>
+              <button class="command accent" data-nrf-time-mode="2"><strong>Clock Mode</strong><span>0x20 + timestamp + mode 2</span></button>
+              <button class="command" id="nrfReadVersion"><strong>Read Version</strong><span>Read 0x62750003</span></button>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <h3>Display Actions</h3>
+            <div class="command-grid">
+              <button class="command" data-nrf-raw="02"><strong>Clear Screen</strong><span>EPD_CMD_CLEAR</span></button>
+              <button class="command" data-nrf-raw="05"><strong>Refresh</strong><span>EPD_CMD_REFRESH</span></button>
+              <button class="command" data-nrf-raw="06"><strong>Panel Sleep</strong><span>EPD_CMD_SLEEP</span></button>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <h3>System</h3>
+            <div class="command-grid">
+              <button class="command warn" data-confirm="Reset the NRF firmware?" data-nrf-raw="91"><strong>System Reset</strong><span>EPD_CMD_SYS_RESET</span></button>
+              <button class="command warn" data-confirm="Put the MCU into sleep mode?" data-nrf-raw="92"><strong>MCU Sleep</strong><span>EPD_CMD_SYS_SLEEP</span></button>
+              <button class="command danger" data-confirm="Erase saved EPD config and reset?" data-nrf-raw="99"><strong>Erase Config</strong><span>EPD_CMD_CFG_ERASE</span></button>
+            </div>
+          </div>
+
+          <div class="notice">
+            Image transfer uses 0x30 frames with chunk flags and pixel payload. This UI keeps image sending out until the payload path is implemented and tested against your panel size.
+          </div>
+        </section>
+
+        <section class="panel hidden" id="daPanel">
+          <div class="panel-head">
+            <div>
+              <div class="label">Secondary target</div>
+              <h2>Dialog Tag Commands</h2>
+            </div>
+            <span class="chip">DA command set</span>
+          </div>
+
+          <div class="section-block">
+            <h3>Panel Type</h3>
+            <div class="command-grid">
+              <button class="command" data-da-sequence="type-250x128"><strong>250x128</strong><span>2.13 inch</span></button>
+              <button class="command" data-da-sequence="type-296x128"><strong>296x128</strong><span>2.9 inch</span></button>
+              <button class="command" data-da-sequence="type-296x152"><strong>296x152</strong><span>2.6 inch</span></button>
+              <button class="command" data-da-sequence="type-300x400"><strong>300x400</strong><span>4.2 inch</span></button>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <h3>Mode</h3>
+            <div class="command-grid">
+              <button class="command" data-da-sequence="mode-picture"><strong>Picture</strong><span>Set picture mode</span></button>
+              <button class="command" data-da-sequence="mode-calendar"><strong>Calendar</strong><span>Set calendar mode</span></button>
+              <button class="command" data-da-sequence="mode-time"><strong>Time</strong><span>Set time mode</span></button>
+              <button class="command" data-da-raw="e1 02"><strong>Next Time Face</strong><span>Cycle time display</span></button>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <h3>Actions</h3>
+            <div class="command-grid">
+              <button class="command accent" data-da-sequence="sync-time"><strong>Sync Time</strong><span>Timestamp + refresh</span></button>
+              <button class="command" data-da-raw="e2"><strong>Refresh</strong><span>Apply screen update</span></button>
+              <button class="command" data-da-raw="e3"><strong>Invert Color</strong><span>Toggle black/white</span></button>
+              <button class="command" data-da-raw="e4"><strong>BLE Name</strong><span>Show or hide name</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel raw-panel">
+          <div class="panel-head compact">
+            <div>
+              <div class="label">Manual</div>
+              <h2>Raw Hex Write</h2>
+            </div>
+          </div>
+          <div class="inline">
+            <input id="rawHex" placeholder="20 00 00 00 00 08 01" spellcheck="false">
+            <button id="rawSend" type="button">Send Hex</button>
+          </div>
+        </section>
+
+        <section class="log-panel">
+          <div class="log-head">
+            <h2>Log Console</h2>
+            <button id="clearLog" type="button">Clear</button>
+          </div>
+          <pre id="log"></pre>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
